@@ -1,0 +1,7 @@
+base_url: "http://test-api.example.com"
+timeout: 30
+verify_ssl: true
+headers:
+  Content-Type: "application/json"
+variables:
+  env_name: "test"

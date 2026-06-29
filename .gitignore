@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+venv/
+env/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 测试报告（运行时生成，不需要版本控制）
+reports/*.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Tool
+.qoder/
+__pycache__/

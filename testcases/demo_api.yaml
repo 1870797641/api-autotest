@@ -1,0 +1,96 @@
+suite_name: "示例接口测试套件"
+
+testcases:
+  # 1. 基础 GET 请求示例
+  - id: health_check
+    name: "健康检查接口"
+    method: GET
+    url: "{{ base_url }}/api/health"
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: jsonpath
+        path: "$.status"
+        operator: equals
+        expected: "ok"
+
+  # 2. POST 请求 + 变量提取示例
+  - id: user_login
+    name: "用户登录"
+    method: POST
+    url: "{{ base_url }}/api/auth/login"
+    headers:
+      Content-Type: "application/json"
+    body:
+      username: "admin"
+      password: "admin123"
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: jsonpath
+        path: "$.data.token"
+        operator: exists
+        expected: true
+    extract:
+      token: "$.data.token"
+      user_id: "$.data.user_id"
+
+  # 3. 依赖前置用例 + 使用提取的变量
+  - id: get_user_info
+    name: "获取用户信息"
+    depends_on: [user_login]
+    method: GET
+    url: "{{ base_url }}/api/users/{{ user_id }}"
+    headers:
+      Authorization: "Bearer {{ token }}"
+    assertions:
+      - type: status_code
+        expected: 200
+      - type: jsonpath
+        path: "$.data.username"
+        operator: equals
+        expected: "admin"
+      - type: response_time
+        operator: lt
+        expected: 2.0
+
+  # 4. 数据驱动参数化示例
+  - id: create_user
+    name: "创建用户（参数化）"
+    depends_on: [user_login]
+    method: POST
+    url: "{{ base_url }}/api/users"
+    headers:
+      Authorization: "Bearer {{ token }}"
+      Content-Type: "application/json"
+    body:
+      username: "{{ username }}"
+      email: "{{ email }}"
+      role: "{{ role }}"
+    data_driven:
+      - { username: "alice", email: "alice@example.com", role: "user" }
+      - { username: "bob", email: "bob@example.com", role: "admin" }
+      - { username: "charlie", email: "charlie@example.com", role: "user" }
+    assertions:
+      - type: status_code
+        operator: in
+        expected: [200, 201]
+      - type: jsonpath
+        path: "$.data.id"
+        operator: exists
+        expected: true
+    extract:
+      new_user_id: "$.data.id"
+
+  # 5. DELETE 请求示例
+  - id: delete_user
+    name: "删除用户"
+    depends_on: [create_user]
+    method: DELETE
+    url: "{{ base_url }}/api/users/{{ new_user_id }}"
+    headers:
+      Authorization: "Bearer {{ token }}"
+    assertions:
+      - type: status_code
+        operator: in
+        expected: [200, 204]

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <style>
+    /* ===== 全局样式 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+                   "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
+      color: #1d2129;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ===== 顶部标题栏 ===== */
+    .header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 32px 36px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(30, 64, 175, 0.25);
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 14px;
+      opacity: 0.92;
+    }
+
+    .header-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-meta .icon { font-size: 16px; }
+
+    /* ===== 统计摘要卡片 ===== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      border-left: 4px solid transparent;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card .label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card .value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .card.total   { border-left-color: #3b82f6; }
+    .card.total   .value { color: #3b82f6; }
+    .card.passed  { border-left-color: #10b981; }
+    .card.passed  .value { color: #10b981; }
+    .card.failed  { border-left-color: #ef4444; }
+    .card.failed  .value { color: #ef4444; }
+    .card.skipped { border-left-color: #f59e0b; }
+    .card.skipped .value { color: #f59e0b; }
+    .card.time    { border-left-color: #8b5cf6; }
+    .card.time    .value { color: #8b5cf6; font-size: 26px; }
+
+    /* ===== 通过率进度条 ===== */
+    .progress-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    .progress-section .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-section .progress-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .progress-section .progress-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .progress-bar-bg {
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.6s ease;
+    }
+
+    /* ===== 用例详情表格 ===== */
+    .table-section {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-section h2 {
+      font-size: 17px;
+      font-weight: 600;
+      padding: 20px 24px 14px;
+      color: #1d2129;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: #f8fafc;
+    }
+
+    thead th {
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #4b5563;
+      border-bottom: 2px solid #e5e7eb;
+      white-space: nowrap;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    tbody tr.row-failed {
+      background: #fef2f2;
+    }
+
+    tbody tr.row-failed:hover {
+      background: #fee2e2;
+    }
+
+    tbody tr.row-skipped {
+      background: #fffbeb;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-pass { background: #d1fae5; color: #065f46; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
+    .badge-skip { background: #fef3c7; color: #92400e; }
+
+    .method-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      min-width: 52px;
+      text-align: center;
+    }
+
+    .method-GET    { background: #3b82f6; }
+    .method-POST   { background: #10b981; }
+    .method-PUT    { background: #f59e0b; }
+    .method-DELETE { background: #ef4444; }
+    .method-PATCH  { background: #8b5cf6; }
+    .method-HEAD   { background: #6b7280; }
+    .method-OPTIONS{ background: #6b7280; }
+
+    .url-cell {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .time-cell {
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .status-cell {
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-weight: 600;
+    }
+
+    /* ===== 展开详情区域 ===== */
+    details {
+      margin: 0;
+    }
+
+    details summary {
+      cursor: pointer;
+      color: #3b82f6;
+      font-size: 13px;
+      font-weight: 500;
+      user-select: none;
+      outline: none;
+    }
+
+    details summary:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+
+    .detail-panel {
+      margin-top: 14px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .detail-panel h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin: 14px 0 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .detail-panel h4:first-child {
+      margin-top: 0;
+    }
+
+    .detail-panel pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+      max-height: 300px;
+      margin: 6px 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .detail-panel .kv-table {
+      width: 100%;
+      font-size: 13px;
+      border-collapse: collapse;
+    }
+
+    .detail-panel .kv-table td {
+      padding: 5px 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .detail-panel .kv-table td:first-child {
+      font-weight: 600;
+      color: #4b5563;
+      white-space: nowrap;
+      width: 140px;
+    }
+
+    /* ===== 断言结果表格 ===== */
+    .assertion-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .assertion-table th {
+      background: #e5e7eb;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .assertion-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f3f4f6;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 12px;
+    }
+
+    .assertion-table tr.assertion-fail {
+      background: #fef2f2;
+    }
+
+    .assertion-table tr.assertion-pass {
+      background: #f0fdf4;
+    }
+
+    /* ===== 错误信息 ===== */
+    .error-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 4px solid #ef4444;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      color: #991b1b;
+      font-size: 13px;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ===== 页脚 ===== */
+    .footer {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12px;
+      padding: 16px 0;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .container { padding: 12px 8px; }
+      .header { padding: 20px 16px; }
+      .header h1 { font-size: 20px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .card .value { font-size: 24px; }
+      thead th, tbody td { padding: 8px 6px; font-size: 12px; }
+      .url-cell { max-width: 140px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  {# ===== 顶部标题栏 ===== #}
+  <div class="header">
+    <h1>{{ title }}</h1>
+    <div class="header-meta">
+      <span><span class="icon">&#128197;</span> 执行时间：{{ generated_at }}</span>
+      <span><span class="icon">&#127760;</span> 环境：{{ env_name }}</span>
+      <span><span class="icon">&#9201;</span> 总耗时：{{ total_time }}</span>
+    </div>
+  </div>
+
+  {# ===== 统计摘要卡片 ===== #}
+  <div class="summary-grid">
+    <div class="card total">
+      <div class="label">总用例数</div>
+      <div class="value">{{ total }}</div>
+    </div>
+    <div class="card passed">
+      <div class="label">通过</div>
+      <div class="value">{{ passed }}</div>
+    </div>
+    <div class="card failed">
+      <div class="label">失败</div>
+      <div class="value">{{ failed }}</div>
+    </div>
+    <div class="card skipped">
+      <div class="label">跳过</div>
+      <div class="value">{{ skipped }}</div>
+    </div>
+    <div class="card time">
+      <div class="label">总耗时</div>
+      <div class="value">{{ total_time }}</div>
+    </div>
+  </div>
+
+  {# ===== 通过率进度条 ===== #}
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-title">通过率</span>
+      <span class="progress-value" style="color: {% if pass_rate >= 80 %}#10b981{% elif pass_rate >= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
+        {{ pass_rate }}%
+      </span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" style="
+        width: {{ pass_rate }}%;
+        background: {% if pass_rate >= 80 %}linear-gradient(90deg, #10b981, #34d399){% elif pass_rate >= 50 %}linear-gradient(90deg, #f59e0b, #fbbf24){% else %}linear-gradient(90deg, #ef4444, #f87171){% endif %};
+      "></div>
+    </div>
+  </div>
+
+  {# ===== 用例详情表格 ===== #}
+  <div class="table-section">
+    <h2>用例详情</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>用例名称</th>
+            <th>方法</th>
+            <th>URL</th>
+            <th>状态码</th>
+            <th>响应时间</th>
+            <th>结果</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          {% set tc = r.test_case %}
+          {% set is_failed = not r.passed and r.error is not none %}
+          {% set is_skipped = not r.passed and r.error is none and not r.assertion_results %}
+          <tr class="{% if is_failed or (not r.passed and r.error) %}row-failed{% elif is_skipped %}row-skipped{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ tc.name }}</strong></td>
+            <td><span class="method-badge method-{{ tc.method | upper }}">{{ tc.method | upper }}</span></td>
+            <td class="url-cell" title="{{ tc.url }}">{{ tc.url }}</td>
+            <td class="status-cell">{{ r.status_code if r.status_code else '-' }}</td>
+            <td class="time-cell">{{ format_time(r.response_time) }}</td>
+            <td>
+              {% if r.passed %}
+                <span class="badge badge-pass">&#10003; 通过</span>
+              {% elif r.error and not r.status_code %}
+                <span class="badge badge-skip">&#8856; 跳过</span>
+              {% else %}
+                <span class="badge badge-fail">&#10007; 失败</span>
+              {% endif %}
+            </td>
+            <td>
+              <details>
+                <summary>查看详情</summary>
+                <div class="detail-panel">
+
+                  {# -- 数据驱动参数 -- #}
+                  {% if r.data_params %}
+                  <h4>&#128203; 数据驱动参数</h4>
+                  <pre>{{ format_json(r.data_params) }}</pre>
+                  {% endif %}
+
+                  {# -- 请求信息 -- #}
+                  <h4>&#128229; 请求信息</h4>
+                  <table class="kv-table">
+                    <tr><td>Method</td><td>{{ tc.method | upper }}</td></tr>
+                    <tr><td>URL</td><td style="word-break:break-all;">{{ tc.url }}</td></tr>
+                  </table>
+                  {% if tc.headers %}
+                  <h4>请求头 (Headers)</h4>
+                  <pre>{{ format_json(tc.headers) }}</pre>
+                  {% endif %}
+                  {% if tc.body %}
+                  <h4>请求体 (Body)</h4>
+                  <pre>{{ format_json(tc.body) }}</pre>
+                  {% endif %}
+
+                  {# -- 响应信息 -- #}
+                  <h4>&#128228; 响应信息</h4>
+                  <table class="kv-table">
+                    <tr><td>状态码</td><td>{{ r.status_code if r.status_code else '-' }}</td></tr>
+                    <tr><td>响应时间</td><td>{{ format_time(r.response_time) }}</td></tr>
+                  </table>
+                  {% if r.response_headers %}
+                  <h4>响应头 (Response Headers)</h4>
+                  <pre>{{ format_json(r.response_headers) }}</pre>
+                  {% endif %}
+                  {% if r.response_body is not none %}
+                  <h4>响应体 (Response Body)</h4>
+                  <pre>{{ format_json(r.response_body) }}</pre>
+                  {% endif %}
+
+                  {# -- 断言详情 -- #}
+                  {% if r.assertion_results %}
+                  <h4>&#128270; 断言详情 ({{ r.assertion_results | length }} 条)</h4>
+                  <table class="assertion-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>类型</th>
+                        <th>操作符</th>
+                        <th>期望值</th>
+                        <th>实际值</th>
+                        <th>结果</th>
+                        <th>说明</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ar in r.assertion_results %}
+                      <tr class="{% if ar.passed %}assertion-pass{% else %}assertion-fail{% endif %}">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ ar.assertion.type }}{% if ar.assertion.path %} ({{ ar.assertion.path }}){% endif %}</td>
+                        <td>{{ ar.assertion.operator }}</td>
+                        <td>{{ ar.assertion.expected }}</td>
+                        <td>{{ ar.actual_value }}</td>
+                        <td>{% if ar.passed %}&#10003; 通过{% else %}&#10007; 失败{% endif %}</td>
+                        <td>{{ ar.message }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                  {% endif %}
+
+                  {# -- 错误信息 -- #}
+                  {% if r.error %}
+                  <h4>&#9888;&#65039; 错误信息</h4>
+                  <div class="error-box">{{ r.error }}</div>
+                  {% endif %}
+
+                </div>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# ===== 页脚 ===== #}
+  <div class="footer">
+    接口自动化测试报告 &middot; 生成于 {{ generated_at }}
+  </div>
+
+</div>
+</body>
+</html>
